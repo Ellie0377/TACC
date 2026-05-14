@@ -123,8 +123,8 @@ def Dataprocessing(start_time, drop_columns, SEQ_LEN, STRIDE):
     print("\n------------------------- Final Result -------------------------")
 
     print("X_train_seq:", X_train_seq.shape, "y_train_seq:", y_train_seq.shape, "skipped:", train_skipped)
-    print("X_val_seq  :", X_val_seq.shape, "y_val_seq  :", y_val_seq.shape, "skipped:", val_skipped)
-    print("X_test_seq :", X_test_seq.shape, "y_test_seq :", y_test_seq.shape, "skipped:", test_skipped)
+    print("X_val_seq  :", X_val_seq.shape, "  y_val_seq  :", y_val_seq.shape, "  skipped:", val_skipped)
+    print("X_test_seq :", X_test_seq.shape, " y_test_seq :", y_test_seq.shape, " skipped:", test_skipped)
     
     return (X_train_seq, y_train_seq, X_val_seq, y_val_seq, X_test_seq, y_test_seq)
     
