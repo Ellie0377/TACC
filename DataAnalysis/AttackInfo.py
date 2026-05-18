@@ -17,20 +17,20 @@ attack_info = {
     2:  {'point': ['P102'],                   'stage': [1],    'type': 'actuator', 'actual_change': True,  'impact': True,  'desc': 'Turn on P-102',                                     'intent': 'Pipe bursts',                      'cat': 'SSSP'},
     3:  {'point': ['LIT101'],                 'stage': [1],    'type': 'sensor',   'actual_change': False, 'impact': True,  'desc': 'Spoof LIT-101 +1mm/s',                              'intent': 'Tank underflow; Damage P-101',     'cat': 'SSSP'},
     4:  {'point': ['MV504'],                  'stage': [5],    'type': 'actuator', 'actual_change': True,  'impact': False, 'desc': 'Open MV-504',                                       'intent': 'Halt RO shutdown',                 'cat': 'SSSP'},
-    # 5:  {'point': [],                         'stage': [],     'type': 'none',     'actual_change': False, 'impact': False, 'desc': 'No Physical Impact',                                'intent': 'N/A',                              'cat': 'NPI'},
+    5:  {'point': [],                         'stage': [],     'type': 'none',     'actual_change': False, 'impact': False, 'desc': 'No Physical Impact',                                'intent': 'N/A',                              'cat': 'NPI'},
     6:  {'point': ['AIT202'],                 'stage': [2],    'type': 'sensor',   'actual_change': False, 'impact': True,  'desc': 'Set AIT-202 = 6',                                   'intent': 'P-203 off; Water quality change',  'cat': 'SSSP'},
     7:  {'point': ['LIT301'],                 'stage': [3],    'type': 'sensor',   'actual_change': False, 'impact': True,  'desc': 'Spoof LIT-301 > HH',                                'intent': 'Stop inflow; Tank underflow',      'cat': 'SSSP'},
     8:  {'point': ['DPIT301'],                'stage': [3],    'type': 'sensor',   'actual_change': False, 'impact': True,  'desc': 'Set DPIT-301 > 40kPa',                              'intent': 'Backwash restart loop',            'cat': 'SSSP'},
-    # 9:  {'point': [],                         'stage': [],     'type': 'none',     'actual_change': False, 'impact': False, 'desc': 'No Physical Impact',                                'intent': 'N/A',                              'cat': 'NPI'},
+    9:  {'point': [],                         'stage': [],     'type': 'none',     'actual_change': False, 'impact': False, 'desc': 'No Physical Impact',                                'intent': 'N/A',                              'cat': 'NPI'},
     10: {'point': ['FIT401'],                 'stage': [4],    'type': 'sensor',   'actual_change': False, 'impact': True,  'desc': 'Set FIT-401 < 0.7',                                 'intent': 'UV shutdown; P-501 off',           'cat': 'SSSP'},
     11: {'point': ['FIT401'],                 'stage': [4],    'type': 'sensor',   'actual_change': False, 'impact': True,  'desc': 'Set FIT-401 = 0',                                   'intent': 'UV shutdown; P-501 off',           'cat': 'SSSP'},
-    # 12: {'point': [],                         'stage': [],     'type': 'none',     'actual_change': False, 'impact': False, 'desc': 'No Physical Impact',                                'intent': 'N/A',                              'cat': 'NPI'},
+    12: {'point': [],                         'stage': [],     'type': 'none',     'actual_change': False, 'impact': False, 'desc': 'No Physical Impact',                                'intent': 'N/A',                              'cat': 'NPI'},
     13: {'point': ['MV304'],                  'stage': [3],    'type': 'actuator', 'actual_change': True,  'impact': True,  'desc': 'Close MV-304',                                      'intent': 'Halt stage-3 backwash',            'cat': 'SSSP'},
     14: {'point': ['MV303'],                  'stage': [3],    'type': 'actuator', 'actual_change': True,  'impact': True,  'desc': 'Keep MV-303 closed',                                'intent': 'Halt stage-3 backwash',            'cat': 'SSSP'},
-    # 15: {'point': [],                         'stage': [],     'type': 'none',     'actual_change': False, 'impact': False, 'desc': 'No Physical Impact',                                'intent': 'N/A',                              'cat': 'NPI'},
+    15: {'point': [],                         'stage': [],     'type': 'none',     'actual_change': False, 'impact': False, 'desc': 'No Physical Impact',                                'intent': 'N/A',                              'cat': 'NPI'},
     16: {'point': ['LIT301'],                 'stage': [3],    'type': 'sensor',   'actual_change': False, 'impact': True,  'desc': 'Spoof LIT-301 -1mm/s',                              'intent': 'Tank overflow',                    'cat': 'SSSP'},
     17: {'point': ['MV303'],                  'stage': [3],    'type': 'actuator', 'actual_change': True,  'impact': True,  'desc': 'Keep MV-303 closed',                                'intent': 'Halt stage-3 backwash',            'cat': 'SSSP'},
-    # 18: {'point': [],                         'stage': [],     'type': 'none',     'actual_change': False, 'impact': False, 'desc': 'No Physical Impact',                                'intent': 'N/A',                              'cat': 'NPI'},
+    18: {'point': [],                         'stage': [],     'type': 'none',     'actual_change': False, 'impact': False, 'desc': 'No Physical Impact',                                'intent': 'N/A',                              'cat': 'NPI'},
     19: {'point': ['AIT504'],                 'stage': [5],    'type': 'sensor',   'actual_change': False, 'impact': False, 'desc': 'Set AIT-504 = 16 uS/cm',                            'intent': 'RO shutdown sequence',             'cat': 'SSSP'},
     20: {'point': ['AIT504'],                 'stage': [5],    'type': 'sensor',   'actual_change': False, 'impact': False, 'desc': 'Set AIT-504 = 255 uS/cm',                           'intent': 'RO shutdown sequence',             'cat': 'SSSP'},
     21: {'point': ['MV101', 'LIT101'],        'stage': [1],    'type': 'mixed',    'actual_change': True,  'impact': True,  'desc': 'Keep MV-101 on; Spoof LIT-101',                     'intent': 'Tank overflow',                    'cat': 'SSMP'},
@@ -93,25 +93,25 @@ stage_map = {
         'actuators': ['P601', 'P602', 'P603']},
 }
 
-attacks = [
+attacks_time = [
     ("Attack1",  "2015-12-28 10:29:14", "2015-12-28 10:44:53"),
     ("Attack2",  "2015-12-28 10:51:08", "2015-12-28 10:58:30"),
     ("Attack3",  "2015-12-28 11:22:00", "2015-12-28 11:28:22"),
     ("Attack4",  "2015-12-28 11:47:39", "2015-12-28 11:54:08"),
-    # ("Attack5",  "2015-12-28 11:58:20", "2015-12-28 12:00:54"),  # No Impact
+    ("Attack5",  "2015-12-28 11:58:20", "2015-12-28 12:00:54"),  # No Impact
     ("Attack6",  "2015-12-28 12:00:55", "2015-12-28 12:04:10"),
     ("Attack7",  "2015-12-28 12:08:25", "2015-12-28 12:15:33"),
     ("Attack8",  "2015-12-28 13:10:10", "2015-12-28 13:26:13"),
-    # ("Attack9",  "2015-12-28 14:15:00", "2015-12-28 14:16:19"),  # No Impact
+    ("Attack9",  "2015-12-28 14:15:00", "2015-12-28 14:16:19"),  # No Impact
     ("Attack10", "2015-12-28 14:16:20", "2015-12-28 14:18:59"),
     ("Attack11", "2015-12-28 14:19:00", "2015-12-28 14:28:20"),
-    # ("Attack12", "2015-12-29 11:10:40", "2015-12-29 11:11:24"),  # No Impact
+    ("Attack12", "2015-12-29 11:10:40", "2015-12-29 11:11:24"),  # No Impact
     ("Attack13", "2015-12-29 11:11:25", "2015-12-29 11:15:17"),
     ("Attack14", "2015-12-29 11:35:40", "2015-12-29 11:42:50"),
-    # ("Attack15", "2015-12-29 11:52:01", "2015-12-29 11:57:24"),  # No Impact
+    ("Attack15", "2015-12-29 11:52:01", "2015-12-29 11:57:24"),  # No Impact
     ("Attack16", "2015-12-29 11:57:25", "2015-12-29 12:02:00"),
     ("Attack17", "2015-12-29 14:38:12", "2015-12-29 14:50:08"),
-    # ("Attack18", "2015-12-29 18:08:55", "2015-12-29 18:10:42"),  # No Impact
+    ("Attack18", "2015-12-29 18:08:55", "2015-12-29 18:10:42"),  # No Impact
     ("Attack19", "2015-12-29 18:10:43", "2015-12-29 18:15:01"),
     ("Attack20", "2015-12-29 18:15:43", "2015-12-29 18:22:17"),
     ("Attack21", "2015-12-29 18:30:00", "2015-12-29 18:42:00"),
