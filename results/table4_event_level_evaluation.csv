@@ -1,0 +1,2 @@
+Event Recall,Detected Events,Total Events,Median Time-to-Detection,Mean Time-to-Detection,Missed Attacks,False Alarm Events,Normal Hours,False Alarms per Hour
+0.9722222222222222,35,36,3.0,19.65714285714286,Attack4,674,93.3625,7.2191725799973225

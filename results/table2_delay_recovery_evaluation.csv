@@ -1,0 +1,7 @@
+Setting,Evaluated Windows,Ignored Windows,Accuracy,Precision,Recall,F1-score,AUC-PR
+1. Official label,98455,0,0.3813,0.1508,0.9586,0.2606,0.726
+2. Recovery 30s,98455,0,0.2816,0.0076,0.8565,0.0151,0.0223
+3. Recovery 60s,98455,0,0.2828,0.0099,0.8465,0.0196,0.0319
+4. Recovery 90s,98455,0,0.284,0.0121,0.8367,0.0238,0.044
+5. Recovery 120s,98455,0,0.2851,0.0142,0.8296,0.028,0.0466
+6. Dynamic recovery-aware,98455,0,0.5788,0.4281,0.9757,0.5951,0.8246

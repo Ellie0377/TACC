@@ -1,0 +1,346 @@
+{
+  "version": "1.1",
+  "n_rules": 20,
+  "high_conf_ids": [
+    "R01",
+    "R02",
+    "R04",
+    "R06",
+    "R07",
+    "R08",
+    "R09",
+    "R11",
+    "R12",
+    "R15",
+    "R16",
+    "R21",
+    "R22",
+    "R23"
+  ],
+  "thresholds": {
+    "LIT101_HIGH": 817.0,
+    "LIT101_LOW": 252.0,
+    "LIT301_HIGH": 1014.0,
+    "LIT301_LOW": 700.0,
+    "LIT401_HIGH": 1002.0,
+    "LIT401_LOW": 625.0,
+    "AIT202_LOW": 7.5,
+    "AIT402_HIGH": 230.0,
+    "FIT301_FLOW": 0.3,
+    "FIT401_FLOW_L3": 1.5,
+    "DPIT301_HIGH": 35.0,
+    "AIT201_LOW": 200.0,
+    "FIT201_FLOW": 0.5,
+    "LIT101_HIGH_SOFT": 817.0,
+    "LIT101_LOW_SOFT": 260.0,
+    "LIT301_HIGH_SOFT": 1014.0,
+    "FIT401_LOW": 0.5,
+    "AIT504_HIGH": 100.0,
+    "DUR_R14": 10,
+    "DUR_R18": 10,
+    "DUR_R19": 5,
+    "DUR_R20": 5,
+    "DUR_R21": 10,
+    "DUR_R22": 5,
+    "DUR_R23": 10
+  },
+  "rules": [
+    {
+      "id": "R01",
+      "layer": "L1",
+      "name": "lit101_overflow",
+      "description": "T-101 原水槽水位超出溢出邊界（> 817 mm）。攻擊 #1 將 LIT101 感測器值注入為 1000，直接觸發。",
+      "violation_col": "r01_lit101_overflow",
+      "duration_s": null,
+      "fpr_normal": 0.0009,
+      "attacks": [
+        "#1"
+      ],
+      "high_conf": true
+    },
+    {
+      "id": "R02",
+      "layer": "L1",
+      "name": "lit101_near_empty",
+      "description": "T-101 原水槽水位低於低液位邊界（< 252 mm）。在目前 startup 後 normal set 中未再出現此狀態，可穩定覆蓋 LIT101 下探型攻擊。",
+      "violation_col": "r02_lit101_near_empty",
+      "duration_s": null,
+      "fpr_normal": 0.0,
+      "attacks": [
+        "#3",
+        "#30",
+        "#36"
+      ],
+      "high_conf": true
+    },
+    {
+      "id": "R03",
+      "layer": "L1",
+      "name": "lit301_overflow",
+      "description": "T-301 超濾槽水位超出溢出邊界（> 1014 mm）。攻擊 #7 將 LIT301 注入高值，#32 強制開啟進水閥導致槽滿。",
+      "violation_col": "r03_lit301_overflow",
+      "duration_s": null,
+      "fpr_normal": 0.0384,
+      "attacks": [
+        "#7",
+        "#32"
+      ],
+      "high_conf": false
+    },
+    {
+      "id": "R04",
+      "layer": "L1",
+      "name": "lit301_abnormally_low",
+      "description": "T-301 超濾槽液位異常偏低（< 700 mm）。正常運轉在 startup 後不會跌破 785 mm，因此可用來補捉 LIT301 低值 spoof / 緩降型攻擊，而不必等到接近空槽才報警。",
+      "violation_col": "r04_lit301_near_empty",
+      "duration_s": null,
+      "fpr_normal": 0.0,
+      "attacks": [
+        "#16",
+        "#41"
+      ],
+      "high_conf": true
+    },
+    {
+      "id": "R05",
+      "layer": "L1",
+      "name": "lit401_overflow",
+      "description": "T-401 脫氯槽水位超出溢出邊界（> 1002 mm）。攻擊 #25 將 LIT401 注入為 1200，#27 操作閥門導致槽滿。",
+      "violation_col": "r05_lit401_overflow",
+      "duration_s": null,
+      "fpr_normal": 0.0186,
+      "attacks": [
+        "#25",
+        "#27"
+      ],
+      "high_conf": false
+    },
+    {
+      "id": "R06",
+      "layer": "L1",
+      "name": "lit401_abnormally_low",
+      "description": "T-401 脫氯槽液位異常偏低（< 625 mm）。正常運轉在 startup 後未低於 775 mm；此規則可補捉 LIT401 spoof-low 與 Stage-4/5 造成的低液位失衡。",
+      "violation_col": "r06_lit401_near_empty",
+      "duration_s": null,
+      "fpr_normal": 0.0,
+      "attacks": [
+        "#25",
+        "#27",
+        "#28",
+        "#31"
+      ],
+      "high_conf": true
+    },
+    {
+      "id": "R07",
+      "layer": "L1",
+      "name": "ait202_ph_drop",
+      "description": "Stage 2 pH 值驟降（AIT202 < 7.5）。攻擊 #6 注入過量 HCl，使 pH 從正常 ~8.4 驟降至 ~6.0。Normal 資料從未低於 8.26，此閾值 FPR = 0%。",
+      "violation_col": "r07_ait202_ph_drop",
+      "duration_s": null,
+      "fpr_normal": 0.0,
+      "attacks": [
+        "#6"
+      ],
+      "high_conf": true
+    },
+    {
+      "id": "R08",
+      "layer": "L1",
+      "name": "ait402_orp_spike",
+      "description": "Stage 4 ORP 值爆衝（AIT402 > 230 mV）。在目前 startup 後 normal set 中未再出現此區間，可穩定抓到過量加藥 / RO 相關異常。",
+      "violation_col": "r08_ait402_orp_spike",
+      "duration_s": null,
+      "fpr_normal": 0.0,
+      "attacks": [
+        "#11",
+        "#22",
+        "#38"
+      ],
+      "high_conf": true
+    },
+    {
+      "id": "R09",
+      "layer": "L2",
+      "name": "p102_backup_pump_on",
+      "description": "P102 備用泵被強制啟動（P102 == 2）。Normal 資料中 P102 恆為 OFF(1)，值=2 代表攻擊強制啟動備用泵。攻擊 #2 直接操控 P102；#35 在 P101 被關閉時自動接手備用泵。",
+      "violation_col": "r09_p102_backup_on",
+      "duration_s": null,
+      "fpr_normal": 0.0,
+      "attacks": [
+        "#2",
+        "#35"
+      ],
+      "high_conf": true
+    },
+    {
+      "id": "R11",
+      "layer": "L2",
+      "name": "p204_hcl_backup_on",
+      "description": "P204 HCl 投藥備用泵被強制啟動（P204 == 2）。Normal 資料中 P204 恆為 OFF(1)。攻擊 #24 同時操控 P203/P204/P205/P206 等投藥泵。",
+      "violation_col": "r11_p204_hcl_backup_on",
+      "duration_s": null,
+      "fpr_normal": 0.0,
+      "attacks": [
+        "#24"
+      ],
+      "high_conf": true
+    },
+    {
+      "id": "R12",
+      "layer": "L2",
+      "name": "p206_naocl_backup_on",
+      "description": "P206 NaOCl 投藥備用泵被強制啟動（P206 == 2）。Normal 資料中 P206 恆為 OFF(1)。攻擊 #24 多泵同時操控，P206 為其中一個目標。",
+      "violation_col": "r12_p206_naocl_backup_on",
+      "duration_s": null,
+      "fpr_normal": 0.0,
+      "attacks": [
+        "#24"
+      ],
+      "high_conf": true
+    },
+    {
+      "id": "R14",
+      "layer": "L3",
+      "name": "p3_pump_off_flow_persist",
+      "description": "P302 主泵停止（P302==1）但 FIT301 仍有流量（> 0.3 m³/h），且此狀態持續 10 秒。正常情況下 P302 停止後水流在 1~2 秒內消散；若 10 秒後仍有流量，代表另有水源（攻擊繞路）或感測器被操控。",
+      "violation_col": "r14_p3_pump_off_flow",
+      "duration_s": 10,
+      "fpr_normal": 1.534,
+      "attacks": [
+        "#2",
+        "#8",
+        "#11",
+        "#14",
+        "#17",
+        "#24",
+        "#26"
+      ],
+      "high_conf": false
+    },
+    {
+      "id": "R15",
+      "layer": "L3",
+      "name": "uv_off_ro_flowing",
+      "description": "UV401 消毒燈關閉（UV401==1）但 P501 RO 高壓泵啟動（P501==2）且 FIT401 進水流量正常（> 1.5 m³/h）。UV 消毒關閉時不應有 RO 系統進水。Normal FPR = 0%。",
+      "violation_col": "r15_uv_off_ro_flowing",
+      "duration_s": null,
+      "fpr_normal": 0.0,
+      "attacks": [
+        "#22",
+        "#28"
+      ],
+      "high_conf": true
+    },
+    {
+      "id": "R16",
+      "layer": "L3",
+      "name": "uf_backwash_dp_contradict",
+      "description": "MV302 逆洗閥開啟（MV302==2）但 DPIT301 差壓同時過高（> 35 kPa）。逆洗本應降低差壓。Normal FPR = 0%。",
+      "violation_col": "r16_backwash_dp_contradict",
+      "duration_s": null,
+      "fpr_normal": 0.0,
+      "attacks": [
+        "#8",
+        "#23"
+      ],
+      "high_conf": true
+    },
+    {
+      "id": "R23",
+      "layer": "L3",
+      "name": "p2_both_dosing_off_flow_persist",
+      "description": "HCl 投藥泵 P203 與 NaOCl 投藥泵 P205 同時停止（均==1）但 FIT201 管線流量仍正常（> 0.5 m³/h），且此狀態持續 10 秒。原始單點 FPR 0.29%，加入持續 10s 後降為 0.0000%。",
+      "violation_col": "r23_p2_dosing_off_persist",
+      "duration_s": 10,
+      "fpr_normal": 0.0,
+      "attacks": [
+        "#1",
+        "#7",
+        "#8",
+        "#11",
+        "#14",
+        "#16",
+        "#17",
+        "#23",
+        "#24",
+        "#37"
+      ],
+      "high_conf": true
+    },
+    {
+      "id": "R18",
+      "layer": "L4",
+      "name": "lit101_sustained_high",
+      "description": "LIT101 持續高於高液位邊界（> 817 mm）達 10 秒。此規則不再追求提早預警，而是用 sustained condition 過濾短暫抖動，保留對持續高液位攻擊的穩定觸發。",
+      "violation_col": "r18_lit101_sustained_high",
+      "duration_s": 10,
+      "fpr_normal": 0.0024,
+      "attacks": [
+        "#1",
+        "#3",
+        "#36"
+      ],
+      "high_conf": false
+    },
+    {
+      "id": "R19",
+      "layer": "L4",
+      "name": "lit101_sustained_low",
+      "description": "LIT101 持續低於軟閾值（< 260 mm）達 5 秒。比 L1 的 R02（< 252 mm）更早觸發，針對緩慢排空型攻擊。",
+      "violation_col": "r19_lit101_sustained_low",
+      "duration_s": 5,
+      "fpr_normal": 0.2733,
+      "attacks": [
+        "#3",
+        "#30",
+        "#36"
+      ],
+      "high_conf": false
+    },
+    {
+      "id": "R20",
+      "layer": "L4",
+      "name": "lit301_sustained_high",
+      "description": "LIT301 持續高於軟閾值（> 1014 mm）達 5 秒。與 L1 R03 閾值相同但加入持續時間，可排除瞬間感測器抖動誤報。",
+      "violation_col": "r20_lit301_sustained_high",
+      "duration_s": 5,
+      "fpr_normal": 0.0384,
+      "attacks": [
+        "#7",
+        "#25",
+        "#32"
+      ],
+      "high_conf": false
+    },
+    {
+      "id": "R21",
+      "layer": "L4",
+      "name": "fit401_sustained_low",
+      "description": "FIT401 RO 進水流量持續偏低（< 0.5 m³/h）達 10 秒。於目前 startup 後 normal set 無觸發，可穩定抓到 UV/RO 進水異常中斷。",
+      "violation_col": "r21_fit401_sustained_low",
+      "duration_s": 10,
+      "fpr_normal": 0.0,
+      "attacks": [
+        "#10",
+        "#11",
+        "#28",
+        "#40"
+      ],
+      "high_conf": true
+    },
+    {
+      "id": "R22",
+      "layer": "L4",
+      "name": "ait504_conductivity_high",
+      "description": "AIT504 RO 滲透液電導率持續偏高（> 100 μS/cm）達 5 秒。正常 RO 滲透液電導率約 1~30 μS/cm，且目前 startup 後 normal set 無觸發。",
+      "violation_col": "r22_ait504_conductivity_high",
+      "duration_s": 5,
+      "fpr_normal": 0.0,
+      "attacks": [
+        "#20"
+      ],
+      "high_conf": true
+    }
+  ]
+}
