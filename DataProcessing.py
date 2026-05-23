@@ -35,8 +35,8 @@ Actuators = [
     'P601', 'P602', 'P603',
 ]
 
-NPI_ATTACK_IDS = {4, 5, 9, 12, 15, 18}
-IGNORE_ATTACK4_IDS = {4}
+NPI_ATTACK_IDS = {5, 9, 12, 15, 18}    # Attack4 excluded from NPI list → recovery period is processed
+IGNORE_ATTACK4_IDS = {4}               # Attack4 attack period is masked in evaluation (no physical impact)
 
 # 計算超過一秒的時間間隔有哪些區段
 def time_gaps(df):
