@@ -5,7 +5,15 @@ import torch
 from tabulate import tabulate
 from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import RobustScaler, MinMaxScaler
-from DataAnalysis.AttackInfo import Sensors, Actuators, attacks_time, stage_map
+from DataAnalysis.AttackInfo import (
+    Sensors,
+    Actuators,
+    attack_info,
+    attacks_time,
+    stage_map,
+    ATTACK_KEY_SENSOR_MAP,
+    ATTACK_CRITICAL_ACTUATOR_MAP,
+)
 
 Sensors = [
     'FIT101', 'LIT101',
@@ -27,7 +35,8 @@ Actuators = [
     'P601', 'P602', 'P603',
 ]
 
-NPI_ATTACK_IDS = {5, 9, 12, 15, 18}
+NPI_ATTACK_IDS = {4, 5, 9, 12, 15, 18}
+IGNORE_ATTACK4_IDS = {4}
 
 # 計算超過一秒的時間間隔有哪些區段
 def time_gaps(df):
@@ -132,7 +141,7 @@ def make_sequence_ignore_mask(values: np.ndarray, seq_len, stride, timestamps=No
 
     return np.asarray(seq_values, dtype=bool), skipped_windows
 
-
+# 記錄每個視窗最後一筆資料的時間戳記
 def make_sequence_end_timestamps(timestamps, seq_len, stride):
     seq_values = []
     skipped_windows = 0
@@ -153,6 +162,7 @@ def make_sequence_end_timestamps(timestamps, seq_len, stride):
     return np.asarray(seq_values), skipped_windows
 
 
+# Sensor -> MinMax, Actuator -> devided by max value
 def mixed_scale_features(train_df, val_df, test_df, feature_cols):
 
     train_scaled = pd.DataFrame(index=train_df.index, columns=feature_cols, dtype=np.float32)
@@ -263,17 +273,48 @@ def build_attack_segment_table():
     return segment_table
 
 
-# 因為目前 AttackInfo 只有 attack time，沒有 attack point，所以先用全部 Sensor / Actuator 作為 fallback。
-# 若之後補上 attack point map，可以直接傳入 key_sensor_map 和 critical_actuator_map。
+def mark_attack_ignore_mask(df: pd.DataFrame, attack_ids, col_name: str):
+    """
+    將指定 attack_id 的原始 attack period 標成 ignore mask。
+    目前主要用於像 Attack4 這種資料集有標 attack、但在本研究設定中希望排除的事件。
+    """
+    if col_name not in df.columns:
+        df[col_name] = 0
+
+    if not attack_ids:
+        return df
+
+    for attack_name, attack_start, attack_end in attacks_time:
+        attack_id = int(attack_name.replace("Attack", ""))
+        if attack_id not in attack_ids:
+            continue
+
+        attack_start = pd.Timestamp(attack_start)
+        attack_end = pd.Timestamp(attack_end)
+        attack_mask = (
+            (df["Timestamp"] >= attack_start) &
+            (df["Timestamp"] <= attack_end)
+        )
+        df.loc[attack_mask, col_name] = 1
+
+    return df
+
+
+# 預設使用 AttackInfo.py 依據 attack point + stage 建出的 device maps。
+# 若呼叫端想覆蓋預設行為，仍可自行傳入 key_sensor_map / critical_actuator_map。
 def get_event_key_devices(row, key_sensor_map=None, critical_actuator_map=None):
     attack_id = int(row["attack_id"])
+    key_sensor_map = ATTACK_KEY_SENSOR_MAP if key_sensor_map is None else key_sensor_map
+    critical_actuator_map = (
+        ATTACK_CRITICAL_ACTUATOR_MAP if critical_actuator_map is None else critical_actuator_map
+    )
 
-    if key_sensor_map is not None and attack_id in key_sensor_map:
+    if attack_id in key_sensor_map:
         key_sensors = key_sensor_map[attack_id]
     else:
         key_sensors = Sensors
 
-    if critical_actuator_map is not None and attack_id in critical_actuator_map:
+    if attack_id in critical_actuator_map:
         critical_actuators = critical_actuator_map[attack_id]
     else:
         critical_actuators = Actuators
@@ -397,6 +438,7 @@ def add_attack_buffer_labels_dynamic(
     df_attack["label_recovery"] = 0
     df_attack["label_dynamic"] = df_attack["Label"].astype(int)
     df_attack["ignore_attack_period_only"] = 0
+    df_attack["ignore_attack4"] = 0
     df_attack["ignore_buffer_10m"] = 0
     df_attack["ignore_buffer_30m"] = 0
     df_attack["ignore_buffer_60m"] = 0
@@ -472,6 +514,7 @@ def add_attack_buffer_labels_dynamic(
         (df_attack["Timestamp"] >= first_attack_start) & (df_attack["Label"] == 0),
         "ignore_attack_period_only"
     ] = 1
+    df_attack = mark_attack_ignore_mask(df_attack, IGNORE_ATTACK4_IDS, "ignore_attack4")
 
     # EWMA 欄位只供 recovery 判斷，不可進入模型輸入，避免增加特徵與 label/baseline leakage
     ewma_cols = [f"{col}_ewma" for col in Sensors]
@@ -535,6 +578,7 @@ def build_test_evaluation_metadata(test_set, SEQ_LEN, STRIDE):
     eval_masks = {}
     for col in [
         "ignore_attack_period_only",
+        "ignore_attack4",
         "ignore_buffer_10m",
         "ignore_buffer_30m",
         "ignore_buffer_60m",
@@ -558,7 +602,18 @@ def build_test_evaluation_metadata(test_set, SEQ_LEN, STRIDE):
     }
 
 
-def Dataprocessing(start_time, SEQ_LEN, STRIDE, return_metadata=False, sensor_alpha=0.1, baseline_k=3.0, sensor_recovery_ratio=0.8, recovery_hold_windows=5):
+def Dataprocessing(
+    start_time,
+    SEQ_LEN,
+    STRIDE,
+    return_metadata=False,
+    sensor_alpha=0.1,
+    baseline_k=3.0,
+    sensor_recovery_ratio=0.8,
+    recovery_hold_windows=5,
+    key_sensor_map=None,
+    critical_actuator_map=None,
+):
 
     # 讀取資料
     df_normal = pd.read_parquet("../Dataset/SWaT_Dataset_Normal_v1.parquet")
@@ -576,6 +631,8 @@ def Dataprocessing(start_time, SEQ_LEN, STRIDE, return_metadata=False, sensor_al
         recovery_hold_windows=recovery_hold_windows,
         recovery_window_size=SEQ_LEN,
         recovery_stride=STRIDE,
+        key_sensor_map=key_sensor_map,
+        critical_actuator_map=critical_actuator_map,
     )
 
     recovery_segments = df_attack.attrs.get("recovery_segments", pd.DataFrame())
@@ -587,6 +644,7 @@ def Dataprocessing(start_time, SEQ_LEN, STRIDE, return_metadata=False, sensor_al
     df_normal["label_recovery"] = 0
     df_normal["label_dynamic"] = df_normal["Label"].astype(int)
     df_normal["ignore_attack_period_only"] = 0
+    df_normal["ignore_attack4"] = 0
     df_normal["ignore_buffer_10m"] = 0
     df_normal["ignore_buffer_30m"] = 0
     df_normal["ignore_buffer_60m"] = 0
@@ -674,7 +732,7 @@ def Dataprocessing(start_time, SEQ_LEN, STRIDE, return_metadata=False, sensor_al
         "label_dynamic": metadata["test_y_dynamic"],
         "label_lag": metadata["test_y_lag"],
     }
-    for mask_key in ["ignore_attack_period_only", "ignore_buffer_10m", "ignore_buffer_30m", "ignore_buffer_60m"]:
+    for mask_key in ["ignore_attack_period_only", "ignore_attack4", "ignore_buffer_10m", "ignore_buffer_30m", "ignore_buffer_60m"]:
         if mask_key in metadata["eval_masks"]:
             attack_window_df_dict[mask_key] = (~metadata["eval_masks"][mask_key]).astype(int)
     attack_window_df = pd.DataFrame(attack_window_df_dict)
@@ -682,15 +740,24 @@ def Dataprocessing(start_time, SEQ_LEN, STRIDE, return_metadata=False, sensor_al
     metadata["attack_window_df"] = attack_window_df
     metadata["test_set"] = test_set.copy()
     metadata["actuator_legal_states"] = df_attack.attrs.get("actuator_legal_states", {})
-    metadata["attack_info"] = attacks_time
+    metadata["attack_info"] = attack_info
+    metadata["attacks_time"] = attacks_time
     metadata["stage_map"] = stage_map
+    metadata["attack_key_sensor_map"] = (
+        ATTACK_KEY_SENSOR_MAP if key_sensor_map is None else key_sensor_map
+    )
+    metadata["attack_critical_actuator_map"] = (
+        ATTACK_CRITICAL_ACTUATOR_MAP if critical_actuator_map is None else critical_actuator_map
+    )
     metadata["npi_attack_ids"] = NPI_ATTACK_IDS
+    metadata["ignore_attack4_ids"] = IGNORE_ATTACK4_IDS
     metadata["seq_len"] = SEQ_LEN
     metadata["stride"] = STRIDE
     
     print("\n------------------------- Recovery-aware Labels -------------------------")
     print(f"label_recovery rows = {int(test_set['label_recovery'].sum())}")
     print(f"label_dynamic rows = {int(test_set['label_dynamic'].sum())}")
+    print(f"ignore Attack4 rows = {int(test_set['ignore_attack4'].sum())}")
     print(f"ignore 10m rows = {int(test_set['ignore_buffer_10m'].sum())}")
     print(f"ignore 30m rows = {int(test_set['ignore_buffer_30m'].sum())}")
     print(f"ignore 60m rows = {int(test_set['ignore_buffer_60m'].sum())}")

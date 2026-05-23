@@ -93,6 +93,77 @@ stage_map = {
         'actuators': ['P601', 'P602', 'P603']},
 }
 
+
+def _dedupe_keep_order(values):
+    out = []
+    seen = set()
+    for value in values:
+        if value in seen:
+            continue
+        seen.add(value)
+        out.append(value)
+    return out
+
+
+def build_attack_device_maps(
+    attack_info_dict=None,
+    stage_map_dict=None,
+    sensor_cols=None,
+    actuator_cols=None,
+):
+    """
+    根據 attack point 與 stage，自動建立 recovery-aware 用的 device maps。
+
+    key_sensor_map:
+    - 優先包含攻擊明確點名的 sensor
+    - 再補上所屬 stage 的 sensors，避免只盯單一 spoofed sensor
+
+    critical_actuator_map:
+    - 優先包含攻擊明確點名的 actuator
+    - 再補上所屬 stage 的 actuators，方便檢查控制狀態是否回到正常可接受範圍
+
+    若某次 attack 的 point / stage 都無法對應到目前資料欄位，才退回全部設備。
+    """
+    attack_info_dict = attack_info if attack_info_dict is None else attack_info_dict
+    stage_map_dict = stage_map if stage_map_dict is None else stage_map_dict
+    sensor_cols = Sensors if sensor_cols is None else sensor_cols
+    actuator_cols = Actuators if actuator_cols is None else actuator_cols
+
+    sensor_set = set(sensor_cols)
+    actuator_set = set(actuator_cols)
+    all_sensors = list(sensor_cols)
+    all_actuators = list(actuator_cols)
+
+    key_sensor_map = {}
+    critical_actuator_map = {}
+
+    for attack_id, info in attack_info_dict.items():
+        point_devices = info.get("point", []) or []
+        stage_ids = info.get("stage", []) or []
+
+        point_sensors = [device for device in point_devices if device in sensor_set]
+        point_actuators = [device for device in point_devices if device in actuator_set]
+
+        stage_sensors = []
+        stage_actuators = []
+        for stage_id in stage_ids:
+            stage_spec = stage_map_dict.get(stage_id, {})
+            stage_sensors.extend(stage_spec.get("sensors", []))
+            stage_actuators.extend(stage_spec.get("actuators", []))
+
+        key_sensors = _dedupe_keep_order(point_sensors + stage_sensors)
+        critical_actuators = _dedupe_keep_order(point_actuators + stage_actuators)
+
+        key_sensor_map[attack_id] = key_sensors if key_sensors else all_sensors.copy()
+        critical_actuator_map[attack_id] = (
+            critical_actuators if critical_actuators else all_actuators.copy()
+        )
+
+    return key_sensor_map, critical_actuator_map
+
+
+ATTACK_KEY_SENSOR_MAP, ATTACK_CRITICAL_ACTUATOR_MAP = build_attack_device_maps()
+
 attacks_time = [
     ("Attack1",  "2015-12-28 10:29:14", "2015-12-28 10:44:53"),
     ("Attack2",  "2015-12-28 10:51:08", "2015-12-28 10:58:30"),
@@ -136,4 +207,3 @@ attacks_time = [
     ("Attack40", "2016-01-02 11:51:42", "2016-01-02 11:56:38"),
     ("Attack41", "2016-01-02 13:13:02", "2016-01-02 13:40:56")
 ]
-

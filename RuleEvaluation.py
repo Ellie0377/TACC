@@ -191,11 +191,26 @@ def attach_rule_predictions(evaluation_df: pd.DataFrame, rule_window_df: pd.Data
     return eval_df
 
 
-def compute_binary_metrics(eval_df, label_col="label_dynamic", pred_col="rule_any", score_col=None, ignore_col=None):
+def build_ignore_mask(eval_df: pd.DataFrame, ignore_col=None):
     if ignore_col is None:
-        mask = np.ones(len(eval_df), dtype=bool)
+        return np.ones(len(eval_df), dtype=bool)
+
+    if isinstance(ignore_col, str):
+        ignore_cols = [ignore_col]
     else:
-        mask = eval_df[ignore_col].to_numpy(dtype=int) == 0
+        ignore_cols = list(ignore_col)
+
+    ignored = np.zeros(len(eval_df), dtype=bool)
+    for col in ignore_cols:
+        if col not in eval_df.columns:
+            raise KeyError(f"Ignore column not found: {col}")
+        ignored |= eval_df[col].to_numpy(dtype=int) == 1
+
+    return ~ignored
+
+
+def compute_binary_metrics(eval_df, label_col="label_dynamic", pred_col="rule_any", score_col=None, ignore_col=None):
+    mask = build_ignore_mask(eval_df, ignore_col=ignore_col)
 
     y_true = eval_df.loc[mask, label_col].to_numpy(dtype=np.int64)
     y_pred = eval_df.loc[mask, pred_col].to_numpy(dtype=np.int64)

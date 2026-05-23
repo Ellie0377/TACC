@@ -1,0 +1,7 @@
+Setting,Evaluated Windows,Ignored Windows,Accuracy,Precision,Recall,F1-score,AUC-PR
+1. Official label (ignore Attack4),98377,78,0.3816,0.1508,0.9649,0.2608,0.7302
+2. Attack-period-only + ignore Attack4,19536,78919,0.9686,0.9731,0.9694,0.9713,0.9972
+3. Post-attack ignore 10 min + ignore Attack4,94964,3491,0.3856,0.1532,0.9664,0.2645,0.7499
+4. Post-attack ignore 30 min + ignore Attack4,89857,8598,0.3931,0.1621,0.9689,0.2777,0.7562
+5. Post-attack ignore 60 min + ignore Attack4,83171,15284,0.4087,0.1765,0.9689,0.2986,0.7625
+6. Dynamic recovery-aware + ignore Attack4,98377,78,0.4601,0.3236,0.8227,0.4644,0.5284
